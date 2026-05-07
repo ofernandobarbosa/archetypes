@@ -80,36 +80,19 @@ echo "✅ Gerando arquivos..."
 echo "⚙️  Registrando '$NOME_MODULO' no pom.xml (dependencyManagement)..."
 if ! grep -q "<artifactId>$NOME_MODULO</artifactId>" pom.xml; then
   SCOPE_TAG=""
-  [ "$ARCH_ONLY" = true ] && SCOPE_TAG="\n        <scope>test</scope>"
+  [ "$ARCH_ONLY" = true ] && SCOPE_TAG="        <scope>test</scope>\n"
 
-  awk -v mod="$NOME_MODULO" -v scope="$SCOPE_TAG" '
-    /<dependencyManagement>/ { in_dep_mgmt = 1 }
-    /<\/dependencies>/ && in_dep_mgmt {
-      print "      <dependency>"
-      print "        <groupId>${project.groupId}</groupId>"
-      print "        <artifactId>" mod "</artifactId>"
-      print "        <version>${project.version}</version>" scope
-      print "      </dependency>"
-      in_dep_mgmt = 0
-      next
-    }
-    { print }
-  ' pom.xml > pom.xml.tmp && mv pom.xml.tmp pom.xml
+  # CORREÇÃO: Procura o fechamento de dependencies DENTRO de dependencyManagement
+  sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s/<\/dependencies>/      <dependency>\n        <groupId>\${project.groupId}<\/groupId>\n        <artifactId>$NOME_MODULO<\/artifactId>\n        <version>\${project.version}<\/version>\n$SCOPE_TAG      <\/dependency>\n    <\/dependencies>/ }" pom.xml
 fi
 
 # 5. Adiciona no app/pom.xml (Apenas se NÃO for arquitetura)
 if [ "$ARCH_ONLY" = false ]; then
     echo "⚙️  Adicionando '$NOME_MODULO' no app/pom.xml (runner)..."
-    awk -v mod="$NOME_MODULO" '
-      /<\/dependencies>/ && !done {
-        print "        <dependency>"
-        print "            <groupId>${project.groupId}</groupId>"
-        print "            <artifactId>" mod "</artifactId>"
-        print "        </dependency>"
-        done = 1
-      }
-      { print }
-    ' app/pom.xml > app/pom.xml.tmp && mv app/pom.xml.tmp app/pom.xml
+    if ! grep -q "<artifactId>$NOME_MODULO</artifactId>" app/pom.xml; then
+        # CORREÇÃO: Injeta antes do fechamento da tag </dependencies> principal
+        sed -i "/<\/dependencies>/ { 0, /<\/dependencies>/ s/<\/dependencies>/        <dependency>\n            <groupId>\${project.groupId}<\/groupId>\n            <artifactId>$NOME_MODULO<\/artifactId>\n        <\/dependency>\n    <\/dependencies>/ }" app/pom.xml
+    fi
 fi
 
 # Mensagem Final Sucesso
