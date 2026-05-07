@@ -14,11 +14,12 @@ public class ${domainClassName}GrpcService implements ${domainClassName}Service 
     }
 
     @Override
-    public Uni<${domainClassName}Response> enviar( ${domainClassName}Request request) {
+    // aqui usamos a interface ComprasService gerada pelo .proto
+    public Uni<${domainClassName}Response> enviarDados( ${domainClassName}Request request) {
         // Mapeia o Request do Proto para o Domínio e executa o UseCase
         return Uni.createFrom().item(() -> {
             useCase.executar(null); // Passar objeto mapeado
-            //dados set dependem do que o Response do proto espera, aqui é apenas um exemplo
+            // dados set dependem do Response do proto, aqui é apenas um exemplo
             return ${domainClassName}Response.newBuilder().setMensagem("Sucesso").setSucesso(true).build();
         });
     }
