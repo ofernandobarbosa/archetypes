@@ -1,14 +1,14 @@
 package ${package}.application.handler;
 
-import ${package}.application.usecase.Processar${domainClassName}UseCase;
+import ${package}.application.usecase.Criar${domainClassName}UseCase;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ${domainClassName}QueueHandler {
 
-    private final Processar${domainClassName}UseCase useCase;
+    private final Criar${domainClassName}UseCase useCase;
 
-    public ${domainClassName}QueueHandler(Processar${domainClassName}UseCase useCase) {
+    public ${domainClassName}QueueHandler(Criar${domainClassName}UseCase useCase) {
         this.useCase = useCase;
     }
 

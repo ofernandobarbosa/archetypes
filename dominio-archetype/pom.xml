@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>maven-archetype</packaging>
 
-    <name>Archetype para Modulos</name>
+    <name>Archetype para domínios comuns</name>
 
     <build>
         <extensions>

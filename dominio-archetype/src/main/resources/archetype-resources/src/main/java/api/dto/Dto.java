@@ -1,4 +1,4 @@
-package ${package}.application.dto;
+package ${package}.api.dto;
 
 public record Dto() {
   

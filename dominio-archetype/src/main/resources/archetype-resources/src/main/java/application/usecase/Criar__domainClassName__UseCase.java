@@ -5,11 +5,11 @@ import ${package}.domain.model.${domainClassName};
 import ${package}.domain.repository.${domainClassName}Repository;
 
 @ApplicationScoped
-public class Processar${domainClassName}UseCase {
+public class Criar${domainClassName}UseCase {
 
     private final ${domainClassName}Repository repository;
 
-    public Processar${domainClassName}UseCase(${domainClassName}Repository repository) {
+    public Criar${domainClassName}UseCase(${domainClassName}Repository repository) {
         this.repository = repository;
     }
 

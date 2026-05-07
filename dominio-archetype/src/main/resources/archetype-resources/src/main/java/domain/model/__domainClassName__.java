@@ -24,5 +24,11 @@ public class ${domainClassName} {
         );
     }
 
+    public void validar() {
+        throw new UnsupportedOperationException(
+            "⚠️ O método 'validar' de '${domainClassName}' ainda não foi implementado. Implemente as regras de validação aqui."
+        );
+    }
+
     public UUID getId() { return id; }
 }

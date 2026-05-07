@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>maven-archetype</packaging>
 
-    <name>Archetype para Arquitetura</name>
+    <name>Archetype para domínio de arquitetura</name>
 
     <build>
         <extensions>

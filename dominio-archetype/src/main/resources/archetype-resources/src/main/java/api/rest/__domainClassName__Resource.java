@@ -1,4 +1,4 @@
-package ${package}.api;
+package ${package}.api.rest;
 
 import ${package}.application.usecase.Criar${domainClassName}UseCase;
 import jakarta.inject.Inject;
@@ -14,11 +14,11 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ${domainClassName}Resource {
 
-    private final Criar${domainClassName}UseCase criarUseCase;
+    private final Criar${domainClassName}UseCase criar${domainClassName}UseCase;
 
     @Inject
-    public ${domainClassName}Resource(Criar${domainClassName}UseCase criarUseCase) {
-        this.criarUseCase = criarUseCase;
+    public ${domainClassName}Resource(Criar${domainClassName}UseCase criar${domainClassName}UseCase) {
+        this.criar${domainClassName}UseCase = criar${domainClassName}UseCase;
     }
 
     @POST
@@ -26,7 +26,7 @@ public class ${domainClassName}Resource {
         // TODO: Substituir 'Object' por um DTO (Record Java 17+)
         // TODO: Mapear DTO -> Domínio
         
-        criarUseCase.executar();
+        criar${domainClassName}UseCase.executar(${domainClassName} domain = null); // TODO: Substituir 'null' pelo domínio mapeado
         
         return Response.status(Response.Status.CREATED).build();
     }
