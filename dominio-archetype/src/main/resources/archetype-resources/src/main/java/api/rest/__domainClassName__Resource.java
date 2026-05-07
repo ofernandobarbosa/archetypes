@@ -26,7 +26,7 @@ public class ${domainClassName}Resource {
         // TODO: Substituir 'Object' por um DTO (Record Java 17+)
         // TODO: Mapear DTO -> Domínio
         
-        criar${domainClassName}UseCase.executar(${domainClassName} domain = null); // TODO: Substituir 'null' pelo domínio mapeado
+        criar${domainClassName}UseCase.executar(null); // TODO: Substituir 'null' pelo domínio mapeado
         
         return Response.status(Response.Status.CREATED).build();
     }
