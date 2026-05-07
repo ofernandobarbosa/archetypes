@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// Configurações para geração do código Java
+option java_multiple_files = true;
+option java_package = "${package}.api.grpc";
+option java_outer_classname = "${domainClassName}Proto";
+
+package ${domainClassName.toLowerCase()};
+
+/**
+ * Serviço de comunicação gRPC para o domínio ${domainClassName}
+ */
+service ${domainClassName}Service {
+  // Exemplo de comando síncrono
+  rpc EnviarDados (${domainClassName}Request) returns (${domainClassName}Response) {}
+}
+
+/**
+ * Mensagem de entrada (Request)
+ */
+message ${domainClassName}Request {
+  string id = 1;
+  string payload = 2;
+}
+
+/**
+ * Mensagem de saída (Response)
+ */
+message ${domainClassName}Response {
+  bool sucesso = 1;
+  string mensagem = 2;
+}

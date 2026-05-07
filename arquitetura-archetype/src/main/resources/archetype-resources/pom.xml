@@ -1,0 +1,23 @@
+<project xmlns="http://apache.org"
+    xmlns:xsi="http://w3.org"
+    xsi:schemaLocation="http://apache.org http://apache.org">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>${groupId}</groupId>
+        <artifactId>${parentArtifactId}</artifactId>
+        <version>${version}</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>${artifactId}</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+    </dependencies>
+</project>
