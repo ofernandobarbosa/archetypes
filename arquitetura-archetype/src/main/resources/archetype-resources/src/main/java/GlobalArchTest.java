@@ -6,9 +6,9 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * Teste de arquitetura reutilizável.
- * Scaneia tudo sob '${package}' no classpath do módulo que o importa.
+ * Scaneia tudo sob '${groupId}' no classpath do módulo que o importa.
  */
-@AnalyzeClasses(packages = "${package}")
+@AnalyzeClasses(packages = "${groupId}")
 public class GlobalArchTest {
 
     @ArchTest

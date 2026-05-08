@@ -17,7 +17,6 @@
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
-            <version>${archunitVersion}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

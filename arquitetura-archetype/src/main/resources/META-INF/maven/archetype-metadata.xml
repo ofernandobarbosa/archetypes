@@ -17,7 +17,7 @@
             </includes>
         </fileSet>
         <fileSet filtered="true">
-            <directory>resources</directory>
+            <directory>src/main/resources</directory>
             <includes>
                 <include>archunit.properties</include>
             </includes>

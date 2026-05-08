@@ -112,7 +112,7 @@ fi
 
 # Garante archunit-junit5 no dependencyManagement
 if ! grep -q "<artifactId>archunit-junit5</artifactId>" pom.xml; then
-    sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s;</dependencies>;      <dependency>\n        <groupId>com.tngtech.archunit<\/groupId>\n        <artifactId>archunit-junit5<\/artifactId>\n        <version>\${archunitVersion}<\/version>\n        <scope>test</scope>\n      <\/dependency>\n    <\/dependencies>; }" pom.xml
+    sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s;</dependencies>;      <dependency>\n        <groupId>com.tngtech.archunit<\/groupId>\n        <artifactId>archunit-junit5<\/artifactId>\n        <version>\${archunitVersion}<\/version>\n      <\/dependency>\n    <\/dependencies>; }" pom.xml
 fi
 
 # 4.3 Surefire Plugin (dependenciesToScan e argLine fix)
