@@ -3,6 +3,7 @@
 # 1. Configuração de Variáveis e Flags
 ARCH_ONLY=false
 NOME_MODULO=""
+RUNNER_FOLDER="app"
 
 for arg in "$@"; do
   if [ "$arg" == "--arch" ]; then
@@ -10,6 +11,12 @@ for arg in "$@"; do
     NOME_MODULO="arch-check"
   elif [ -z "$NOME_MODULO" ]; then
     NOME_MODULO="$arg"
+  elif [ "$arg" == "--runner-folder" ]; then
+    # Próximo argumento deve ser o nome da pasta runner
+    continue
+  elif [ "$ARCH_ONLY" = false ] && [ -n "$NOME_MODULO" ] && [ -d "$arg" ]; then
+    # remover ultima barra se existir
+    RUNNER_FOLDER="${arg%/}"
   fi
 done
 
@@ -20,17 +27,13 @@ if [ -z "$NOME_MODULO" ]; then
   exit 1
 fi
 
-# 2. Definição de Arquétipo e Pacote
-if [ "$ARCH_ONLY" = true ]; then
-    ARCHETYPE_ID="arquitetura-archetype"
-    PACOTE="dev.ofernando.arquitetura"
-    echo "🛡️  Modo Arquitetura ativado. Gerando módulo 'arch-check'..."
+# adicionar validaçao se pasta /app existe, se nao existir, lançar mensagem de erro e solicitar o nome da pasta runner em uma flag
+if [ ! -d "$RUNNER_FOLDER" ]; then
+  echo "❌ Erro: A pasta '$RUNNER_FOLDER' não foi encontrada. Por favor, informe a flag '--runner-folder' caso a pasta runner for diferente de ./app seguida do nome da pasta runner"
+  echo "Uso: './gerar-modulo.sh dominio-pagamento --runner-folder ./app-runner'"
+  exit 1
 else
-    ARCHETYPE_ID="dominio-archetype"
-    SUFIXO_MODULO="${NOME_MODULO#dominio-}"
-    SUFIXO_PACOTE="${SUFIXO_MODULO//-/}"
-    PACOTE="dev.ofernando.${SUFIXO_PACOTE}"
-    DOMAIN_CLASS_NAME=$(echo "$SUFIXO_MODULO" | sed 's/.*/\L&/; s/./\U&/')
+  echo "✅ Pasta runner '$RUNNER_FOLDER' encontrada. Continuando com pasta padrão..."
 fi
 
 echo "🔍 Lendo informações do projeto pai..."
@@ -50,6 +53,19 @@ PARENT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStd
 if [ $? -ne 0 ] || [[ "$PARENT_ARTIFACT_ID" == *"ERROR"* ]] || [[ "$PARENT_VERSION" == *"ERROR"* ]]; then
   echo "❌ Erro: O Maven falhou ao ler as informações do pom.xml pai."
   exit 1
+fi
+
+# 2. Definição de Arquétipo e Pacote
+if [ "$ARCH_ONLY" = true ]; then
+    ARCHETYPE_ID="arquitetura-archetype"
+    PACOTE="$PARENT_GROUP_ID.arquitetura"
+    echo "🛡️  Modo Arquitetura ativado. Gerando módulo 'arch-check'..."
+else
+    ARCHETYPE_ID="dominio-archetype"
+    SUFIXO_MODULO="${NOME_MODULO#dominio-}"
+    SUFIXO_PACOTE="${SUFIXO_MODULO//-/}"
+    PACOTE="$PARENT_GROUP_ID.${SUFIXO_PACOTE}"
+    DOMAIN_CLASS_NAME=$(echo "$SUFIXO_MODULO" | sed 's/.*/\L&/; s/./\U&/')
 fi
 
 echo "🚀 Gerando o módulo '$NOME_MODULO' herdando de '$PARENT_ARTIFACT_ID'..."
@@ -76,22 +92,56 @@ fi
 echo "============================================================"
 echo "✅ Gerando arquivos..."
 
-# 4. Adiciona no dependencyManagement do pom.xml raiz (parent)
-echo "⚙️  Registrando '$NOME_MODULO' no pom.xml (dependencyManagement)..."
+# 4. Configuração Global (Parent POM)
+echo "⚙️  Verificando configurações de governança no pom.xml..."
+
+# 4.1 Properties (archunitVersion e argLine)
+# Insere logo após a propriedade <revision> para ficar no bloco principal
+if ! grep -q "<archunitVersion>" pom.xml; then
+    sed -i "/<revision>/a \    <archunitVersion>1.4.2</archunitVersion>\n    <argLine></argLine>" pom.xml
+fi
+
+# 4.2 DependencyManagement (arch-check e archunit)
 if ! grep -q "<artifactId>$NOME_MODULO</artifactId>" pom.xml; then
   SCOPE_TAG=""
   [ "$ARCH_ONLY" = true ] && SCOPE_TAG="        <scope>test</scope>\n"
 
-  # CORREÇÃO: Procura o fechamento de dependencies DENTRO de dependencyManagement
-  sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s/<\/dependencies>/      <dependency>\n        <groupId>\${project.groupId}<\/groupId>\n        <artifactId>$NOME_MODULO<\/artifactId>\n        <version>\${project.version}<\/version>\n$SCOPE_TAG      <\/dependency>\n    <\/dependencies>/ }" pom.xml
+  # Procura o fechamento de dependencies DENTRO de dependencyManagement
+  sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s;</dependencies>;      <dependency>\n        <groupId>\${project.groupId}<\/groupId>\n        <artifactId>$NOME_MODULO<\/artifactId>\n        <version>\${project.version}<\/version>\n$SCOPE_TAG      <\/dependency>\n    <\/dependencies>; }" pom.xml
+fi
+
+# Garante archunit-junit5 no dependencyManagement
+if ! grep -q "<artifactId>archunit-junit5</artifactId>" pom.xml; then
+    sed -i "/<dependencyManagement>/, /<\/dependencies>/ { /<\/dependencies>/ s;</dependencies>;      <dependency>\n        <groupId>com.tngtech.archunit<\/groupId>\n        <artifactId>archunit-junit5<\/artifactId>\n        <version>\${archunitVersion}<\/version>\n        <scope>test</scope>\n      <\/dependency>\n    <\/dependencies>; }" pom.xml
+fi
+
+# 4.3 Surefire Plugin (dependenciesToScan e argLine fix)
+# Corrige @{argLine} para ${argLine} para evitar crash sem JaCoCo
+sed -i 's/@{argLine}/\${argLine}/g' pom.xml
+
+if ! grep -q "<dependenciesToScan>" pom.xml; then
+    # Injeta dependenciesToScan logo após a tag <configuration> do surefire
+    sed -i '/<artifactId>maven-surefire-plugin<\/artifactId>/, /<\/configuration>/ s/<configuration>/<configuration>\n          <dependenciesToScan>\n            <dependency>\${project.groupId}:arch-check<\/dependency>\n          <\/dependenciesToScan>/' pom.xml
+fi
+
+# 5. Adiciona dependência do arch-check no novo módulo (Se NÃO for arch-check)
+if [ "$ARCH_ONLY" = false ]; then
+    echo "⚙️  Vinculando '$NOME_MODULO' ao 'arch-check'..."
+    # Injeta antes do fechamento da tag </dependencies> do novo módulo
+    sed -i "/<\/dependencies>/ i \        <dependency>\n            <groupId>\${project.groupId}</groupId>\n            <artifactId>arch-check</artifactId>\n        </dependency>" "$NOME_MODULO/pom.xml"
 fi
 
 # 5. Adiciona no app/pom.xml (Apenas se NÃO for arquitetura)
 if [ "$ARCH_ONLY" = false ]; then
-    echo "⚙️  Adicionando '$NOME_MODULO' no app/pom.xml (runner)..."
-    if ! grep -q "<artifactId>$NOME_MODULO</artifactId>" app/pom.xml; then
+    echo "⚙️  Adicionando '$NOME_MODULO' no $RUNNER_FOLDER/pom.xml (runner)..."
+    if ! grep -q "<artifactId>$NOME_MODULO</artifactId>" "$RUNNER_FOLDER/pom.xml"; then
         # CORREÇÃO: Injeta antes do fechamento da tag </dependencies> principal
-        sed -i "/<\/dependencies>/ { 0, /<\/dependencies>/ s/<\/dependencies>/        <dependency>\n            <groupId>\${project.groupId}<\/groupId>\n            <artifactId>$NOME_MODULO<\/artifactId>\n        <\/dependency>\n    <\/dependencies>/ }" app/pom.xml
+        sed -i "/<\/dependencies>/ { 0, /<\/dependencies>/ s/<\/dependencies>/        <dependency>\n            <groupId>\${project.groupId}<\/groupId>\n            <artifactId>$NOME_MODULO<\/artifactId>\n        <\/dependency>\n    <\/dependencies>/ }" "$RUNNER_FOLDER/pom.xml"
+
+        if [ $? -ne 0 ]; then
+          echo "❌ Erro: Falha ao adicionar o módulo no $RUNNER_FOLDER/pom.xml."
+          exit 1
+        fi
     fi
 fi
 
@@ -107,6 +157,6 @@ if [ "$ARCH_ONLY" = false ]; then
     echo -e "3. Remova os 'UnsupportedOperationException' após implementar a lógica."
 else
     echo -e "\n\033[1;33m📋 PRÓXIMOS PASSOS PARA O MÓDULO DE ARQUITETURA:\033[0m"
-    echo -e "1. Defina as regras do ArchUnit em: \033[32m${NOME_MODULO}/src/main/java/dev/ofernando/arquitetura/RegrasDddBase.java\033[0m"
+    echo -e "1. Defina as regras do ArchUnit em: \033[32m${NOME_MODULO}/src/main/java/${PACOTE//./\/}/RegrasDddBase.java\033[0m"
 fi
 echo "==========================================================="

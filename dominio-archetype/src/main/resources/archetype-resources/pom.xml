@@ -26,6 +26,13 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>core</artifactId>
         </dependency>
+
+        <!-- Regras de arquitetura -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>arch-check</artifactId>
+        </dependency>
+
         <!-- gRPC comunicação síncrona -->
         <dependency>
             <groupId>io.quarkus</groupId>

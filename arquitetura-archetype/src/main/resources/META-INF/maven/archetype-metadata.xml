@@ -16,5 +16,11 @@
                 <include>pom.xml</include>
             </includes>
         </fileSet>
+        <fileSet filtered="true">
+            <directory>resources</directory>
+            <includes>
+                <include>archunit.properties</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </archetype-descriptor>
